@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { HeroSection } from "@/components/hero-section"
 import { useState } from "react"
 import { PRODUCTS, CATEGORIES, type Category, type Product, type CategoryItem } from "@/lib/constants"
 import { ProductCard } from "@/components/product-card"
@@ -49,17 +50,7 @@ export default function HomePage() {
   return (
     <div className="pb-16">
       {/* Hero Section */}
-      <section className="relative aspect-[3/4] w-full overflow-hidden sm:aspect-[16/9] md:aspect-[2/1]">
-        <Image
-          src="/hero-image.jpg"
-          alt="Luxury Showroom"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-foreground/30" />
-      </section>
+      <HeroSection />
 
       {/* Search Bar */}
       <section className="px-4 pt-8">

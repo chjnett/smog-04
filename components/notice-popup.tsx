@@ -26,16 +26,21 @@ export function NoticePopup() {
             const { data, error } = await supabase
                 .from("notices")
                 .select("*")
-                .eq("is_popup", true)
                 .order("created_at", { ascending: false })
-                .limit(1)
+                .limit(10)
 
             if (data && data.length > 0 && !error) {
-                // Check if this specific notice was already dismissed
-                const dismissedId = localStorage.getItem("notice_popup_dismissed_id")
-                if (dismissedId === data[0].id) return
+                const today = new Date().toISOString().split("T")[0]
+                // Filter for popup notices with valid exposure dates
+                const active = data.find((n: any) => {
+                    if (n.is_popup === false) return false
+                    const inRange = (!n.start_date || n.start_date <= today) && (!n.end_date || n.end_date >= today)
+                    const notDismissed = localStorage.getItem("notice_popup_dismissed_id") !== n.id
+                    return inRange && notDismissed
+                })
+                if (!active) return
 
-                setNotice(data[0])
+                setNotice(active)
                 // Small delay for smooth entrance animation
                 setTimeout(() => setIsVisible(true), 100)
             }

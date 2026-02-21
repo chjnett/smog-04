@@ -124,7 +124,7 @@ export default function ProductDetailPage({
         <p className="mt-2 text-lg font-bold text-foreground">
           {formatPrice(product.price)}
         </p>
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-base leading-loose text-muted-foreground whitespace-pre-wrap">
           {product.description}
         </p>
       </div>

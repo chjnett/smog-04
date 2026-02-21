@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState<any[]>([])
   const [about, setAbout] = useState<any>(null)
   const [categories, setCategories] = useState<CategoryItem[]>([])
+  const [todayVisitors, setTodayVisitors] = useState(0)
+  const [totalVisitors, setTotalVisitors] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   // Form States
@@ -40,7 +42,7 @@ export default function AdminPage() {
   const [productImages, setProductImages] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [blogForm, setBlogForm] = useState({ title: "", excerpt: "", date: new Date().toLocaleDateString("ko-KR") })
-  const [noticeForm, setNoticeForm] = useState({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: false })
+  const [noticeForm, setNoticeForm] = useState({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
   const [reviewForm, setReviewForm] = useState({ author: "", rating: "5", product: "", content: "", date: new Date().toLocaleDateString("ko-KR"), image_url: "" })
   const [reviewImage, setReviewImage] = useState<File | null>(null)
   const [aboutForm, setAboutForm] = useState({ description: "", mission_title: "", mission_content: "", contact_title: "", contact_content: "" })
@@ -80,6 +82,21 @@ export default function AdminPage() {
         setAboutForm(resAbout.data)
       }
       if (resCategories.data) setCategories(resCategories.data)
+
+      // Visitor Stats
+      const today = new Date().toISOString().split("T")[0]
+      const { data: todayData } = await supabase
+        .from("visitor_stats")
+        .select("count")
+        .eq("date", today)
+        .single()
+      setTodayVisitors(todayData?.count || 0)
+
+      const { data: allData } = await supabase
+        .from("visitor_stats")
+        .select("count")
+      const total = (allData || []).reduce((sum: number, row: any) => sum + (row.count || 0), 0)
+      setTotalVisitors(total)
     } catch (err) {
       console.error(err)
     } finally {
@@ -180,18 +197,26 @@ export default function AdminPage() {
   async function handleNoticeSubmit(e: React.FormEvent) {
     e.preventDefault()
     const isEditing = editingId.notices !== null;
+    const payload: any = {
+      title: noticeForm.title,
+      content: noticeForm.content,
+      date: noticeForm.date,
+      is_popup: true,
+    }
+    if (noticeForm.start_date) payload.start_date = noticeForm.start_date
+    if (noticeForm.end_date) payload.end_date = noticeForm.end_date
     let error;
     if (isEditing) {
-      const { error: err } = await supabase.from("notices").update(noticeForm).eq("id", editingId.notices)
+      const { error: err } = await supabase.from("notices").update(payload).eq("id", editingId.notices)
       error = err;
     } else {
-      const { error: err } = await supabase.from("notices").insert([noticeForm])
+      const { error: err } = await supabase.from("notices").insert([payload])
       error = err;
     }
 
     if (error) return toast.error("오류 발생")
     toast.success(isEditing ? "수정 완료" : "등록 완료")
-    setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: false })
+    setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
     setEditingId(prev => ({ ...prev, notices: null }))
     fetchAll()
   }
@@ -262,7 +287,7 @@ export default function AdminPage() {
   }
 
   function startEditNotice(n: any) {
-    setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: n.is_popup || false })
+    setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: true, start_date: n.start_date || "", end_date: n.end_date || "" })
     setEditingId(prev => ({ ...prev, notices: n.id }))
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -284,7 +309,7 @@ export default function AdminPage() {
     setEditingId(prev => ({ ...prev, [tab]: null }))
     if (tab === "products") setProductForm({ name: "", brand: "", price: "", category: "", description: "", shipping_info: "모든 상품은 주문 확인 후 2-5 영업일 내에 발송됩니다. 배송비는 50,000원 이상 구매 시 무료이며, 그 이하의 경우 3,000원이 부과됩니다. 상품 수령 후 7일 이내에 미착용 상태로 반품 신청이 가능합니다. 반품 시 배송비는 고객 부담입니다.", product_details: "모든 상품은 정품 인증서와 함께 배송됩니다. 자세한 사이즈 및 소재 정보는 카카오톡 문의를 통해 확인해 주세요." })
     if (tab === "blog_posts") setBlogForm({ title: "", excerpt: "", date: new Date().toLocaleDateString("ko-KR") })
-    if (tab === "notices") setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: false })
+    if (tab === "notices") setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
     if (tab === "reviews") {
       setReviewForm({ author: "", rating: "5", product: "", content: "", date: new Date().toLocaleDateString("ko-KR"), image_url: "" })
       setReviewImage(null)
@@ -372,14 +397,23 @@ export default function AdminPage() {
 
   return (
     <div className="px-4 py-6 sm:px-6">
+      {/* Visitor Stats */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="border border-foreground/10 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">오늘 방문자</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{todayVisitors.toLocaleString()}</p>
+        </div>
+        <div className="border border-foreground/10 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">총 방문자</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{totalVisitors.toLocaleString()}</p>
+        </div>
+      </div>
+
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-secondary overflow-x-auto h-auto">
+        <TabsList className="grid w-full grid-cols-3 bg-secondary overflow-x-auto h-auto">
           <TabsTrigger value="products" className="text-[10px] uppercase font-bold tracking-tight py-3">상품</TabsTrigger>
           <TabsTrigger value="categories" className="text-[10px] uppercase font-bold tracking-tight py-3">카테고리</TabsTrigger>
-          <TabsTrigger value="about" className="text-[10px] uppercase font-bold tracking-tight py-3">소개</TabsTrigger>
-          <TabsTrigger value="blog" className="text-[10px] uppercase font-bold tracking-tight py-3">블로그</TabsTrigger>
           <TabsTrigger value="notice" className="text-[10px] uppercase font-bold tracking-tight py-3">공지</TabsTrigger>
-          <TabsTrigger value="reviews" className="text-[10px] uppercase font-bold tracking-tight py-3">리뷰</TabsTrigger>
         </TabsList>
 
         {/* Products Tab */}
@@ -395,7 +429,7 @@ export default function AdminPage() {
               <Input placeholder="상품명" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
               <textarea
                 placeholder="상품 설명"
-                className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20"
+                className="w-full min-h-72 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20"
                 value={productForm.description}
                 onChange={e => setProductForm({ ...productForm, description: e.target.value })}
                 required
@@ -521,164 +555,60 @@ export default function AdminPage() {
           </div>
         </TabsContent>
 
-        {/* About Tab */}
-        <TabsContent value="about">
-          <div className="mt-8">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">소개글 수정</h2>
-            <form onSubmit={handleAboutUpdate} className="mt-6 flex flex-col gap-4 border border-foreground/10 p-4 text-foreground bg-background">
-              <div className="space-y-2">
-                <Label>상점 설명</Label>
-                <textarea className="w-full min-h-32 border border-foreground/20 p-3 text-sm focus:outline-none" value={aboutForm.description} onChange={e => setAboutForm({ ...aboutForm, description: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>미션 제목</Label>
-                <Input value={aboutForm.mission_title} onChange={e => setAboutForm({ ...aboutForm, mission_title: e.target.value })} />
-                <Label>미션 내용</Label>
-                <textarea className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none" value={aboutForm.mission_content} onChange={e => setAboutForm({ ...aboutForm, mission_content: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>연락처 제목</Label>
-                <Input value={aboutForm.contact_title} onChange={e => setAboutForm({ ...aboutForm, contact_title: e.target.value })} />
-                <Label>연락처 내용</Label>
-                <textarea className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none" value={aboutForm.contact_content} onChange={e => setAboutForm({ ...aboutForm, contact_content: e.target.value })} />
-              </div>
-              <button type="submit" className="bg-foreground py-3 text-xs font-bold text-background">정보 업데이트</button>
-            </form>
-          </div>
-        </TabsContent>
-
-        {/* Blog Tab */}
-        <TabsContent value="blog">
-          <div className="mt-8">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">블로그 관리</h2>
-            <form onSubmit={handleBlogSubmit} className="mt-6 flex flex-col gap-4 border border-foreground/10 p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">{editingId.blog_posts ? "블로그 수정 중" : "새 블로그 게시"}</span>
-                {editingId.blog_posts && <button type="button" onClick={() => cancelEdit("blog_posts")} className="text-[10px] underline">취소</button>}
-              </div>
-              <Input placeholder="글 제목" value={blogForm.title} onChange={e => setBlogForm({ ...blogForm, title: e.target.value })} required />
-              <textarea placeholder="글 내용 요약" className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-background" value={blogForm.excerpt} onChange={e => setBlogForm({ ...blogForm, excerpt: e.target.value })} required />
-              <Input placeholder="날짜" value={blogForm.date} onChange={e => setBlogForm({ ...blogForm, date: e.target.value })} />
-              <button type="submit" className="bg-foreground py-3 text-xs font-bold text-background">{editingId.blog_posts ? "수정 완료" : "블로그 게시"}</button>
-            </form>
-            <div className="mt-8 space-y-4">
-              {blogs.map(b => (
-                <div key={b.id} className="flex items-center justify-between border-b border-foreground/5 py-4">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground font-medium">{b.date}</p>
-                    <p className="text-sm font-medium">{b.title}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditBlog(b)} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
-                    <button onClick={() => handleDelete("blog_posts", b.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Notice Tab */}
+        {/* Notice / Popup Tab */}
         <TabsContent value="notice">
           <div className="mt-8">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">공지사항 관리</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">팝업 공지 관리</h2>
             <form onSubmit={handleNoticeSubmit} className="mt-6 flex flex-col gap-4 border border-foreground/10 p-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">{editingId.notices ? "공지 수정 중" : "새 공지 등록"}</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">{editingId.notices ? "팝업 수정 중" : "새 팝업 등록"}</span>
                 {editingId.notices && <button type="button" onClick={() => cancelEdit("notices")} className="text-[10px] underline">취소</button>}
               </div>
-              <Input placeholder="공지 제목" value={noticeForm.title} onChange={e => setNoticeForm({ ...noticeForm, title: e.target.value })} required />
-              <textarea placeholder="공지 내용" className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-background" value={noticeForm.content} onChange={e => setNoticeForm({ ...noticeForm, content: e.target.value })} required />
-              <Input placeholder="날짜" value={noticeForm.date} onChange={e => setNoticeForm({ ...noticeForm, date: e.target.value })} />
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={noticeForm.is_popup}
-                  onChange={e => setNoticeForm({ ...noticeForm, is_popup: e.target.checked })}
-                  className="size-4 accent-foreground cursor-pointer"
-                />
-                <span className="text-xs font-medium text-foreground">팝업으로 표시</span>
-                <span className="text-[10px] text-muted-foreground">(홈 화면에 팝업으로 띄우기)</span>
-              </label>
-              <button type="submit" className="bg-foreground py-3 text-xs font-bold text-background">{editingId.notices ? "수정 완료" : "공지 등록"}</button>
-            </form>
-            <div className="mt-8 space-y-4">
-              {notices.map(n => (
-                <div key={n.id} className="flex items-center justify-between border-b border-foreground/5 py-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-[10px] text-muted-foreground font-medium">{n.date}</p>
-                      {n.is_popup && <span className="text-[8px] font-bold uppercase tracking-wider bg-foreground text-background px-1.5 py-0.5">팝업</span>}
-                    </div>
-                    <p className="text-sm font-medium">{n.title}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditNotice(n)} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
-                    <button onClick={() => handleDelete("notices", n.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
-                  </div>
+              <Input placeholder="팝업 제목" value={noticeForm.title} onChange={e => setNoticeForm({ ...noticeForm, title: e.target.value })} required />
+              <textarea placeholder="팝업 내용" className="w-full min-h-32 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20" value={noticeForm.content} onChange={e => setNoticeForm({ ...noticeForm, content: e.target.value })} required />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">노출 시작일</Label>
+                  <Input type="date" value={noticeForm.start_date} onChange={e => setNoticeForm({ ...noticeForm, start_date: e.target.value })} />
                 </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Reviews Tab */}
-        <TabsContent value="reviews">
-          <div className="mt-8">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">리뷰 관리</h2>
-            <form onSubmit={handleReviewSubmit} className="mt-6 flex flex-col gap-4 border border-foreground/10 p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">{editingId.reviews ? "리뷰 수정 중" : "새 리뷰 등록"}</span>
-                {editingId.reviews && <button type="button" onClick={() => cancelEdit("reviews")} className="text-[10px] underline">취소</button>}
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">노출 종료일</Label>
+                  <Input type="date" value={noticeForm.end_date} onChange={e => setNoticeForm({ ...noticeForm, end_date: e.target.value })} />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input placeholder="작성자" value={reviewForm.author} onChange={e => setReviewForm({ ...reviewForm, author: e.target.value })} required />
-                <Select value={reviewForm.rating} onValueChange={val => setReviewForm({ ...reviewForm, rating: val })}>
-                  <SelectTrigger><SelectValue placeholder="별점" /></SelectTrigger>
-                  <SelectContent>
-                    {[5, 4, 3, 2, 1].map(r => <SelectItem key={r} value={r.toString()}>{r}점</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input placeholder="상품명" value={reviewForm.product} onChange={e => setReviewForm({ ...reviewForm, product: e.target.value })} required />
-              <textarea placeholder="리뷰 내용" className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-background" value={reviewForm.content} onChange={e => setReviewForm({ ...reviewForm, content: e.target.value })} required />
-              <div className="flex flex-col gap-2">
-                <Label className="text-[10px] font-bold uppercase text-muted-foreground">리뷰 사진 (선택)</Label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setReviewImage(e.target.files?.[0] || null)}
-                  className="text-xs file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-semibold file:bg-foreground file:text-background hover:file:opacity-90 cursor-pointer"
-                />
-                {reviewForm.image_url && <p className="text-[10px] text-muted-foreground">기존 사진이 등록되어 있습니다.</p>}
-              </div>
-              <Input placeholder="날짜" value={reviewForm.date} onChange={e => setReviewForm({ ...reviewForm, date: e.target.value })} />
-              <button type="submit" disabled={isUploading} className="bg-foreground py-3 text-xs font-bold text-background disabled:opacity-50">
-                {isUploading ? "처리 중..." : (editingId.reviews ? "수정 완료" : "리뷰 등록")}
-              </button>
+              <p className="text-[10px] text-muted-foreground">* 날짜를 비워두면 무기한 노출됩니다.</p>
+              <button type="submit" className="bg-foreground py-3 text-xs font-bold text-background">{editingId.notices ? "수정 완료" : "팝업 등록"}</button>
             </form>
             <div className="mt-8 space-y-4">
-              {reviews.map(r => (
-                <div key={r.id} className="flex items-center justify-between border-b border-foreground/5 py-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold">{r.author}</span>
-                      <span className="text-[10px] text-muted-foreground">{r.date}</span>
-                    </div>
-                    {r.image_url && (
-                      <div className="mt-2 relative size-12 overflow-hidden border border-foreground/10">
-                        <img src={r.image_url} alt="" className="object-cover size-full" />
+              {notices.filter((n: any) => n.is_popup).map((n: any) => {
+                const now = new Date().toISOString().split("T")[0]
+                const isActive = (!n.start_date || n.start_date <= now) && (!n.end_date || n.end_date >= now)
+                return (
+                  <div key={n.id} className="flex items-center justify-between border-b border-foreground/5 py-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] text-muted-foreground font-medium">{n.date}</p>
+                        <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 ${isActive ? "bg-foreground text-background" : "bg-muted-foreground/20 text-muted-foreground"}`}>
+                          {isActive ? "노출중" : "만료"}
+                        </span>
                       </div>
-                    )}
-                    <p className="text-xs font-medium mt-1">{r.product}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{r.content}</p>
+                      <p className="text-sm font-medium">{n.title}</p>
+                      {(n.start_date || n.end_date) && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {n.start_date || "시작일 없음"} ~ {n.end_date || "종료일 없음"}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => {
+                        setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: true, start_date: n.start_date || "", end_date: n.end_date || "" })
+                        setEditingId(prev => ({ ...prev, notices: n.id }))
+                      }} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
+                      <button onClick={() => handleDelete("notices", n.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditReview(r)} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
-                    <button onClick={() => handleDelete("reviews", r.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </TabsContent>

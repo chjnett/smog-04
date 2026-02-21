@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SiteHeader } from '@/components/site-header'
 import { NoticePopup } from '@/components/notice-popup'
+import { VisitorTracker } from '@/components/visitor-tracker'
+import { KakaoButton } from '@/components/kakao-button'
 import './globals.css'
 
 const _inter = Inter({
@@ -52,6 +54,8 @@ export default function RootLayout({
         <SiteHeader />
         <main>{children}</main>
         <NoticePopup />
+        <KakaoButton />
+        <VisitorTracker />
         <Analytics />
       </body>
     </html>
