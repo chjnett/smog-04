@@ -13,6 +13,7 @@ const LINES = [
 
 const TYPING_SPEED = 60
 const LINE_DELAY = 400
+const RESTART_DELAY = 2000
 
 export function HeroSection() {
     const [displayedLines, setDisplayedLines] = useState<string[]>([])
@@ -20,9 +21,17 @@ export function HeroSection() {
     const [currentChar, setCurrentChar] = useState(0)
     const [showCursor, setShowCursor] = useState(true)
 
-    // Typing effect
+    // Typing effect (infinite loop)
     useEffect(() => {
-        if (currentLine >= LINES.length) return
+        if (currentLine >= LINES.length) {
+            // All lines typed — wait then restart
+            const timer = setTimeout(() => {
+                setDisplayedLines([])
+                setCurrentLine(0)
+                setCurrentChar(0)
+            }, RESTART_DELAY)
+            return () => clearTimeout(timer)
+        }
 
         const line = LINES[currentLine].text
 
