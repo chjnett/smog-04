@@ -401,31 +401,21 @@ export default function AdminPage() {
                 required
               />
               <Input type="number" placeholder="가격" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} required />
-              <Select value={productForm.category} onValueChange={val => setProductForm({ ...productForm, category: val as Category })}>
+              <Select
+                value={categories.find(c => c.name === productForm.category)?.id || productForm.category}
+                onValueChange={val => {
+                  const found = categories.find(c => c.id === val)
+                  setProductForm({ ...productForm, category: found ? found.name : val })
+                }}
+              >
                 <SelectTrigger><SelectValue placeholder="카테고리" /></SelectTrigger>
                 <SelectContent>
                   {categories.length > 0
-                    ? categories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.parent_id ? `ㄴ ${cat.name}` : cat.name}</SelectItem>)
-                    : CATEGORIES.filter(c => c !== "전체").map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)
+                    ? categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.parent_id ? `ㄴ ${cat.name}` : cat.name}</SelectItem>)
+                    : CATEGORIES.filter(c => c !== "전체").map((cat, idx) => <SelectItem key={`${cat}-${idx}`} value={cat}>{cat}</SelectItem>)
                   }
                 </SelectContent>
               </Select>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">배송 및 반품 안내</Label>
-                <textarea
-                  className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20"
-                  value={productForm.shipping_info}
-                  onChange={e => setProductForm({ ...productForm, shipping_info: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">상품 상세 정보</Label>
-                <textarea
-                  className="w-full min-h-24 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20"
-                  value={productForm.product_details}
-                  onChange={e => setProductForm({ ...productForm, product_details: e.target.value })}
-                />
-              </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-medium">상품 이미지 ({productImages.length}개 선택됨)</Label>
                 <p className="text-[10px] text-muted-foreground">{editingId.products ? "새 이미지를 선택하면 기존 이미지가 교체됩니다." : "필수 항목입니다."}</p>

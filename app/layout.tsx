@@ -11,8 +11,8 @@ const _inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: '광저우 삼촌 | Premium Luxury Shopping',
-  description: '광저우 삼촌 - 프리미엄 럭셔리 패션 쇼핑몰. 가방, 신발, 시계, 의류 등 엄선된 명품을 만나보세요.',
+  title: 'Dint | Premium Luxury Shopping',
+  description: 'Dint - 프리미엄 럭셔리 패션 쇼핑몰. 가방, 신발, 시계, 의류 등 엄선된 명품을 만나보세요.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -60,27 +60,6 @@ function ShopContent() {
         </p>
       </div>
 
-      {/* Category Chips */}
-      <div className="border-b border-foreground/10">
-        <ScrollArea className="w-full">
-          <div className="flex gap-2 px-4 py-3">
-            {(dbCategories.length > 0 ? dbCategories : CATEGORIES).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 border px-4 py-2 text-xs font-medium tracking-wide transition-colors ${activeCategory === cat
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-foreground/20 bg-background text-foreground hover:border-foreground/40"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
-      </div>
-
       {/* Product Grid */}
       <div className="px-4 pt-6">
         <p className="mb-4 text-xs text-muted-foreground">

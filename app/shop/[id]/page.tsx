@@ -131,21 +131,51 @@ export default function ProductDetailPage({
 
       {/* Accordions */}
       <div className="mt-8 px-4">
-        <Accordion type="single" collapsible>
+        <Accordion type="multiple">
           <AccordionItem value="shipping" className="border-foreground/10">
             <AccordionTrigger className="text-sm font-medium text-foreground">
-              배송 및 반품 안내
+              배송안내
             </AccordionTrigger>
-            <AccordionContent className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-              {product.shipping_info || "모든 상품은 주문 확인 후 2-5 영업일 내에 발송됩니다. 배송비는 50,000원 이상 구매 시 무료이며, 그 이하의 경우 3,000원이 부과됩니다. 상품 수령 후 7일 이내에 미착용 상태로 반품 신청이 가능합니다. 반품 시 배송비는 고객 부담입니다."}
+            <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+              <p className="font-semibold text-foreground mb-3">통관 보장 무료배송 : 조건 없이 국내까지 무료배송됩니다.</p>
+              <p className="text-xs text-muted-foreground/80 mb-4">(초기 불량을 줄이기 위해서)</p>
+              <ul className="space-y-2.5 text-xs">
+                <li><span className="font-medium text-foreground">배송 방법</span> : 자체 특수운송, 혹은 EMS (상황에 따라 운송 방식은 수시로 변할 수 있습니다.)</li>
+                <li><span className="font-medium text-foreground">배송 지역</span> : 한국 전국 지역 / 동남아 제외한 모든 국가. (한국 이외의 국가로 배송을 원할 시 관리자에게 문의 바랍니다.)</li>
+                <li><span className="font-medium text-foreground">배송 비용</span> : 중국→국내까지 배송비 조건 없이 무료입니다.</li>
+                <li><span className="font-medium text-foreground">배송 기간</span> : 고객주문후 수령까지 보통 2~3주 정도소요. (중국현지 연휴 및 물류상황에 따라서 더 오래 걸릴 수도 있습니다.)</li>
+                <li><span className="font-medium text-foreground">배송 안내</span> : 상품 종류에 따라서 (주문 제작 상품 등) 상품의 배송이 다소 지연될 수 있습니다. 해외 배송인 관계로 반품 및 교환의 번거로움을 줄이고자 배송 시에는 철저하게 검수과정을 거치게 됩니다. 조금이라도 빠른 배송을 위해 더욱 노력하겠습니다.</li>
+              </ul>
             </AccordionContent>
           </AccordionItem>
-          <AccordionItem value="details" className="border-foreground/10">
+
+          <AccordionItem value="purchase" className="border-foreground/10">
             <AccordionTrigger className="text-sm font-medium text-foreground">
-              상품 상세 정보
+              구매정보
             </AccordionTrigger>
-            <AccordionContent className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-              {product.product_details || `카테고리: ${product.category} | 브랜드: ${product.brand}\n모든 상품은 정품 인증서와 함께 배송됩니다. 자세한 사이즈 및 소재 정보는 카카오톡 문의를 통해 확인해 주세요.`}
+            <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+              <p className="font-semibold text-foreground mb-1">구매방법</p>
+              <p className="text-xs text-muted-foreground/80 mb-4">(구매 관련 궁금하신 사항이 있으시면 언제든 카카오톡 고객센터로 연락주세요 😀)</p>
+              <ol className="space-y-2 text-xs list-decimal list-inside mb-6">
+                <li>구매 원하시는 제품들을 캡쳐하신후 카카오 문의하기 눌러주세요</li>
+                <li>제품사진, 성함, 번호, 주소, 개인통관고유부호를 카톡상담사에게 전달해주세요<br /><span className="text-muted-foreground/70 ml-4">*주소 꼭 올바르게 동호수까지 작성 부탁드려요!</span></li>
+                <li>저희 상담 직원이 계좌안내 드릴거에요. 😊 결제 해주시면 됩니다.</li>
+              </ol>
+
+              <p className="font-semibold text-foreground mb-2">배송소요시간</p>
+              <p className="text-xs mb-6">제품 준비기간 2주, 배송 1주 - 대략적으로 3주 안내드리고 있고 특이사항 발생할 경우 안내드린 기간보다 좀 더 길어질 수 있어요. 😥 (재고가 없을 경우 생산되는 시간, 제품이 나왔는데 불량인 경우 교환되는 시간 등)</p>
+
+              <p className="font-semibold text-foreground mb-2">교환 &amp; 환불 정책</p>
+              <ul className="space-y-2 text-xs mb-6">
+                <li>• 단순 변심으로 인한 환불은 불가능해요 😥<br /><span className="text-muted-foreground/70 ml-3">&apos;그냥&apos; 마음에 안들어요, 성에 안차요 이런 사유로 환불 불가.</span></li>
+                <li>• 배송 지연으로 인한 환불, 교환은 불가능해요 😥<br /><span className="text-muted-foreground/70 ml-3">(입금일로부터 60일 경과했을 경우 가능)</span></li>
+                <li>• 불량 상품은 상품 수령일 기준 일주일 내 연락주시면 교환 가능해요</li>
+                <li>• 제품에 사용 흔적이 있을 경우 교환, 환불처리 불가능해요 😥<br /><span className="text-muted-foreground/70 ml-3">(향수냄새, 오염, 택제거, 구성품 누락 등) 제품 수령하신 상태 그대로 온전히 보내주셔야 처리됩니다.</span></li>
+              </ul>
+
+              <p className="font-semibold text-foreground mb-2">AS가능 여부</p>
+              <p className="text-xs">수령 하시고 한달 이내로 발생하는 문제들에 한해 무료로 AS 가능, 한달 이후 발생하는 문제들은 유상 AS 가능합니다.</p>
+              <p className="text-xs mt-2 text-muted-foreground/70">&apos;두번 밖에 안들었는데 고장났어요&apos; &apos;받자마자 옷장에 넣어놨다가 지금 발견했어요&apos; 라고 말씀하셔도 무료로 AS는 불가능합니다. 😥</p>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

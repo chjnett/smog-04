@@ -59,48 +59,7 @@ export default function HomePage() {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-foreground/30" />
-        <div className="absolute inset-0 flex flex-col items-center justify-end px-4 pb-12 text-center sm:justify-center sm:pb-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-background/80 sm:text-xs">
-            Premium Luxury Collection
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-background sm:text-5xl md:text-6xl">
-            광저우 삼촌
-          </h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-background/70 sm:text-base">
-            엄선된 프리미엄 럭셔리 아이템을 만나보세요
-          </p>
-          <Link
-            href="/shop"
-            className="mt-6 border border-background px-8 py-3 text-xs font-medium uppercase tracking-widest text-background transition-colors hover:bg-background hover:text-foreground"
-          >
-            Shop Now
-          </Link>
-        </div>
       </section>
-
-      {/* Category Tabs */}
-      <div className="sticky top-14 z-30 border-b border-foreground/10 bg-background/95 backdrop-blur-sm">
-        <ScrollArea className="w-full">
-          <div className="flex gap-2 px-4 py-3">
-            {(dbCategories.length > 0 ? dbCategories : CATEGORIES).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat)
-                  setSearchQuery("") // Clear search when category changes for cleaner UX
-                }}
-                className={`shrink-0 border px-4 py-2 text-xs font-medium tracking-wide transition-colors ${activeCategory === cat
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-foreground/20 bg-background text-foreground hover:border-foreground/40"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
-      </div>
 
       {/* Search Bar */}
       <section className="px-4 pt-8">
@@ -108,7 +67,7 @@ export default function HomePage() {
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder={`${activeCategory === "전체" ? "상품" : activeCategory} 검색...`}
+            placeholder="상품 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full border border-foreground/10 bg-secondary py-3 pl-10 pr-4 text-sm transition-colors focus:border-foreground/30 focus:outline-none"
