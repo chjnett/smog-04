@@ -9,6 +9,7 @@ interface PopupNotice {
     title: string
     content: string
     date: string
+    image_url?: string
 }
 
 export function NoticePopup() {
@@ -86,6 +87,15 @@ export function NoticePopup() {
 
                     {/* Body */}
                     <div className="px-5 py-6">
+                        {notice.image_url && (
+                            <div className="relative mb-6 aspect-square w-full overflow-hidden border border-foreground/5 bg-secondary/30">
+                                <img
+                                    src={notice.image_url}
+                                    alt={notice.title}
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                        )}
                         <h3 className="text-base font-bold text-foreground">{notice.title}</h3>
                         <p className="mt-1 text-[10px] font-medium text-muted-foreground">{notice.date}</p>
                         <p className="mt-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{notice.content}</p>

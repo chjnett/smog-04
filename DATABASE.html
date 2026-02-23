@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>&#x1f5c4;&#xfe0f; Dint &mdash; &#xb370;&#xc774;&#xd130;&#xbca0;&#xc774;&#xc2a4; &#xad6c;&#xc870; &#xbb38;&#xc11c;</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="️-dint--데이터베이스-구조-문서">🗄️ Dint — 데이터베이스 구조 문서</h1>
+<blockquote>
+<p><strong>Backend</strong>: Supabase (PostgreSQL) + Supabase Storage<br>
+총 <strong>7개 테이블</strong> + <strong>1개 Storage 버킷</strong></p>
+</blockquote>
+<hr>
+<h2 id="-전체-db-관계도-er-diagram">📊 전체 DB 관계도 (ER Diagram)</h2>
+<pre><code class="language-mermaid">erDiagram
+    products ||--o{ categories : &quot;category (name 참조)&quot;
+    categories ||--o{ categories : &quot;parent_id (자기 참조)&quot;
+    notices ||--o| notices : &quot;is_popup 필터&quot;
+
+    products {
+        uuid id PK &quot;기본키 (UUID)&quot;
+        text brand &quot;브랜드명&quot;
+        text name &quot;상품명&quot;
+        integer price &quot;가격 (원)&quot;
+        text category &quot;카테고리명 (categories.name 참조)&quot;
+        text_array images &quot;이미지 URL 배열&quot;
+        text description &quot;상품 설명&quot;
+        text shipping_info &quot;배송 안내&quot;
+        text product_details &quot;상품 상세 정보&quot;
+        timestamptz created_at &quot;생성일시 (자동)&quot;
+    }
+
+    categories {
+        uuid id PK &quot;기본키 (UUID)&quot;
+        text name &quot;카테고리명&quot;
+        uuid parent_id FK &quot;상위 카테고리 ID (NULL=최상위)&quot;
+        integer sort_order &quot;정렬 순서&quot;
+        timestamptz created_at &quot;생성일시 (자동)&quot;
+    }
+
+    blog_posts {
+        uuid id PK &quot;기본키 (UUID)&quot;
+        text title &quot;글 제목&quot;
+        text excerpt &quot;요약/내용&quot;
+        text date &quot;작성일 (표시용 문자열)&quot;
+        timestamptz created_at &quot;생성일시 (자동)&quot;
+    }
+
+    reviews {
+        uuid id PK &quot;기본키 (UUID)&quot;
+        text author &quot;작성자명&quot;
+        text product &quot;상품명 (표시용)&quot;
+        integer rating &quot;별점 (1~5)&quot;
+        text content &quot;리뷰 내용&quot;
+        text date &quot;작성일 (표시용 문자열)&quot;
+        text image_url &quot;리뷰 이미지 URL (선택)&quot;
+        timestamptz created_at &quot;생성일시 (자동)&quot;
+    }
+
+    notices {
+        uuid id PK &quot;기본키 (UUID)&quot;
+        text title &quot;공지 제목&quot;
+        text content &quot;공지 내용&quot;
+        text date &quot;작성일 (표시용 문자열)&quot;
+        boolean is_popup &quot;팝업 공지 여부&quot;
+        text start_date &quot;노출 시작일 (YYYY-MM-DD)&quot;
+        text end_date &quot;노출 종료일 (YYYY-MM-DD)&quot;
+        timestamptz created_at &quot;생성일시 (자동)&quot;
+    }
+
+    about {
+        integer id PK &quot;기본키 (고정값 1)&quot;
+        text description &quot;브랜드 소개 설명&quot;
+        text mission_title &quot;미션 제목&quot;
+        text mission_content &quot;미션 내용&quot;
+        text contact_title &quot;연락처 제목&quot;
+        text contact_content &quot;연락처 내용&quot;
+    }
+
+    visitor_stats {
+        text date PK &quot;날짜 (YYYY-MM-DD)&quot;
+        integer count &quot;방문자 수&quot;
+    }
+</code></pre>
+<hr>
+<h2 id="-테이블별-상세-설명">📋 테이블별 상세 설명</h2>
+<h3 id="1-products--상품-테이블">1. <code>products</code> — 상품 테이블</h3>
+<blockquote>
+<p>쇼핑몰의 핵심 테이블. 모든 상품 정보를 저장합니다.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키 (자동 생성)</td>
+<td><code>a1b2c3d4-...</code></td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>브랜드명</td>
+<td><code>&quot;MAISON DE LUXE&quot;</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>상품명</td>
+<td><code>&quot;클래식 레더 토트백&quot;</code></td>
+</tr>
+<tr>
+<td><code>price</code></td>
+<td><code>integer</code></td>
+<td style="text-align:center">✅</td>
+<td>가격 (원)</td>
+<td><code>320000</code></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>카테고리명 (<a href="http://categories.name">categories.name</a> 연결)</td>
+<td><code>&quot;가방&quot;</code></td>
+</tr>
+<tr>
+<td><code>images</code></td>
+<td><code>text[]</code></td>
+<td style="text-align:center">✅</td>
+<td>이미지 URL 배열 (Supabase Storage)</td>
+<td><code>[&quot;https://...png&quot;]</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>상품 설명</td>
+<td><code>&quot;최상급 이탈리아...&quot;</code></td>
+</tr>
+<tr>
+<td><code>shipping_info</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">❌</td>
+<td>배송 안내 (기본값 제공)</td>
+<td><code>&quot;모든 상품은...&quot;</code></td>
+</tr>
+<tr>
+<td><code>product_details</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">❌</td>
+<td>상품 상세 정보</td>
+<td><code>&quot;정품 인증서...&quot;</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamptz</code></td>
+<td style="text-align:center">✅</td>
+<td>생성일시 (기본값: now())</td>
+<td><code>2026-02-20T...</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>사용되는 곳:</strong></p>
+<ul>
+<li>홈페이지 (<code>/</code>) — 최신 8개 상품 표시</li>
+<li>쇼핑 페이지 (<code>/shop</code>) — 전체 상품 + 카테고리 필터</li>
+<li>상세 페이지 (<code>/shop/[id]</code>) — 단일 상품 조회</li>
+<li>관리자 (<code>/admin</code>) — CRUD</li>
+</ul>
+<hr>
+<h3 id="2-categories--카테고리-테이블">2. <code>categories</code> — 카테고리 테이블</h3>
+<blockquote>
+<p><strong>자기 참조(Self-referencing)</strong> 구조로 계층형 카테고리를 지원합니다.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키 (자동 생성)</td>
+<td><code>x1y2z3...</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>카테고리명</td>
+<td><code>&quot;가방&quot;</code></td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">❌</td>
+<td>상위 카테고리 ID (NULL = 최상위)</td>
+<td><code>null</code> 또는 <code>&quot;x1y2z3...&quot;</code></td>
+</tr>
+<tr>
+<td><code>sort_order</code></td>
+<td><code>integer</code></td>
+<td style="text-align:center">✅</td>
+<td>정렬 순서</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamptz</code></td>
+<td style="text-align:center">✅</td>
+<td>생성일시</td>
+<td><code>2026-02-20T...</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>사용되는 곳:</strong></p>
+<ul>
+<li>헤더 사이드바 — 카테고리 네비게이션 (부모→자식 트리)</li>
+<li>홈/쇼핑 — 카테고리 필터 탭</li>
+<li>관리자 — 카테고리 트리 관리</li>
+</ul>
+<p><strong>계층 구조 예시:</strong></p>
+<pre><code>가방 (parent_id: null, sort_order: 1)
+  ├── 토트백 (parent_id: 가방.id, sort_order: 1)
+  ├── 숄더백 (parent_id: 가방.id, sort_order: 2)
+  └── 클러치 (parent_id: 가방.id, sort_order: 3)
+신발 (parent_id: null, sort_order: 2)
+  ├── 스니커즈 (parent_id: 신발.id, sort_order: 1)
+  └── 옥스포드 (parent_id: 신발.id, sort_order: 2)
+시계 (parent_id: null, sort_order: 3)
+의류 (parent_id: null, sort_order: 4)
+</code></pre>
+<hr>
+<h3 id="3-blog_posts--블로그-글-테이블">3. <code>blog_posts</code> — 블로그 글 테이블</h3>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>글 제목</td>
+<td><code>&quot;2026 S/S 트렌드&quot;</code></td>
+</tr>
+<tr>
+<td><code>excerpt</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>요약/내용</td>
+<td><code>&quot;올 봄 주목해야 할...&quot;</code></td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>표시용 날짜 문자열</td>
+<td><code>&quot;2026. 2. 21.&quot;</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamptz</code></td>
+<td style="text-align:center">✅</td>
+<td>생성일시</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>사용되는 곳:</strong> <code>/blog</code> 페이지, <code>/admin</code> CRUD</p>
+<hr>
+<h3 id="4-reviews--리뷰-테이블">4. <code>reviews</code> — 리뷰 테이블</h3>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>작성자명</td>
+<td><code>&quot;김*수&quot;</code></td>
+</tr>
+<tr>
+<td><code>product</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>상품명 (표시용 텍스트)</td>
+<td><code>&quot;클래식 레더 토트백&quot;</code></td>
+</tr>
+<tr>
+<td><code>rating</code></td>
+<td><code>integer</code></td>
+<td style="text-align:center">✅</td>
+<td>별점 (1~5)</td>
+<td><code>5</code></td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>리뷰 내용</td>
+<td><code>&quot;퀄리티가 정말...&quot;</code></td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>표시용 날짜 문자열</td>
+<td><code>&quot;2026. 2. 20.&quot;</code></td>
+</tr>
+<tr>
+<td><code>image_url</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">❌</td>
+<td>리뷰 이미지 URL</td>
+<td><code>&quot;https://...png&quot;</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamptz</code></td>
+<td style="text-align:center">✅</td>
+<td>생성일시</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>사용되는 곳:</strong> <code>/reviews</code> 페이지 (별점 + 이미지 표시), <code>/admin</code> CRUD</p>
+<hr>
+<h3 id="5-notices--공지사항-테이블">5. <code>notices</code> — 공지사항 테이블</h3>
+<blockquote>
+<p>일반 공지 + 팝업 공지 모두 관리. <code>is_popup</code>과 날짜 범위로 팝업 노출 제어.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>uuid</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>공지 제목</td>
+<td><code>&quot;설 연휴 배송 안내&quot;</code></td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>공지 내용</td>
+<td><code>&quot;2/8~2/12 배송 휴무...&quot;</code></td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>표시용 날짜 문자열</td>
+<td><code>&quot;2026. 2. 1.&quot;</code></td>
+</tr>
+<tr>
+<td><code>is_popup</code></td>
+<td><code>boolean</code></td>
+<td style="text-align:center">❌</td>
+<td>팝업 공지 여부</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">❌</td>
+<td>노출 시작일 (YYYY-MM-DD)</td>
+<td><code>&quot;2026-02-01&quot;</code></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">❌</td>
+<td>노출 종료일 (YYYY-MM-DD)</td>
+<td><code>&quot;2026-02-12&quot;</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamptz</code></td>
+<td style="text-align:center">✅</td>
+<td>생성일시</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>팝업 노출 로직:</strong></p>
+<pre><code>is_popup === true
+AND (start_date 없음 OR start_date &lt;= 오늘)
+AND (end_date 없음 OR end_date &gt;= 오늘)
+→ 팝업으로 노출
+</code></pre>
+<p><strong>사용되는 곳:</strong></p>
+<ul>
+<li><code>/notice</code> 페이지 — 전체 공지 목록</li>
+<li><code>NoticePopup</code> 컴포넌트 — 메인 진입 시 팝업</li>
+<li><code>/admin</code> — 팝업 공지 CRUD + 노출 기간 설정</li>
+</ul>
+<hr>
+<h3 id="6-about--소개-페이지-테이블">6. <code>about</code> — 소개 페이지 테이블</h3>
+<blockquote>
+<p><strong>단일 레코드</strong> (id = 1). 브랜드 소개 정보를 저장합니다.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td style="text-align:center">✅</td>
+<td>기본키 (고정값: 1)</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>브랜드 설명</td>
+<td><code>&quot;Dint는 프리미엄...&quot;</code></td>
+</tr>
+<tr>
+<td><code>mission_title</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>미션 섹션 제목</td>
+<td><code>&quot;OUR MISSION&quot;</code></td>
+</tr>
+<tr>
+<td><code>mission_content</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>미션 섹션 내용</td>
+<td><code>&quot;최고의 퀄리티...&quot;</code></td>
+</tr>
+<tr>
+<td><code>contact_title</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>연락처 섹션 제목</td>
+<td><code>&quot;CONTACT&quot;</code></td>
+</tr>
+<tr>
+<td><code>contact_content</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>연락처 내용</td>
+<td><code>&quot;카카오톡: ...&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>사용되는 곳:</strong> <code>/about</code> 페이지, <code>/admin</code> 수정 (항상 UPDATE, INSERT 없음)</p>
+<hr>
+<h3 id="7-visitor_stats--방문자-통계-테이블">7. <code>visitor_stats</code> — 방문자 통계 테이블</h3>
+<blockquote>
+<p>일별 방문자 수를 기록. 세션당 1회만 카운트 (<code>sessionStorage</code> 사용).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>컬럼</th>
+<th>타입</th>
+<th style="text-align:center">필수</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>date</code></td>
+<td><code>text</code></td>
+<td style="text-align:center">✅</td>
+<td>날짜 (YYYY-MM-DD) = PK 역할</td>
+<td><code>&quot;2026-02-21&quot;</code></td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td><code>integer</code></td>
+<td style="text-align:center">✅</td>
+<td>해당일 방문자 수</td>
+<td><code>142</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>동작 방식:</strong></p>
+<pre><code>1. 페이지 로드 시 sessionStorage 확인 → 이미 추적됐으면 스킵
+2. 오늘 날짜 레코드 존재? → UPDATE count + 1
+3. 없으면? → INSERT { date: today, count: 1 }
+4. sessionStorage에 &quot;visitor_tracked&quot; 저장
+</code></pre>
+<p><strong>사용되는 곳:</strong></p>
+<ul>
+<li><code>VisitorTracker</code> 컴포넌트 (RootLayout) — 자동 기록</li>
+<li><code>/admin</code> — 오늘/총 방문자 수 대시보드 표시</li>
+</ul>
+<hr>
+<h2 id="-storage-버킷">📁 Storage 버킷</h2>
+<h3 id="product-images-버킷"><code>product-images</code> 버킷</h3>
+<blockquote>
+<p>상품 및 리뷰 이미지 업로드용 Supabase Storage 버킷</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>버킷 이름</strong></td>
+<td><code>product-images</code></td>
+</tr>
+<tr>
+<td><strong>경로 구조</strong></td>
+<td><code>products/{random_filename}.{ext}</code></td>
+</tr>
+<tr>
+<td><strong>업로드 방식</strong></td>
+<td><code>supabase.storage.from(&quot;product-images&quot;).upload(...)</code></td>
+</tr>
+<tr>
+<td><strong>URL 생성</strong></td>
+<td><code>supabase.storage.from(&quot;product-images&quot;).getPublicUrl(...)</code></td>
+</tr>
+<tr>
+<td><strong>사용 대상</strong></td>
+<td>상품 이미지 (<code>products.images[]</code>), 리뷰 이미지 (<code>reviews.image_url</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-테이블별-crud-매핑">🔄 테이블별 CRUD 매핑</h2>
+<pre><code class="language-mermaid">graph LR
+    subgraph 프론트엔드[&quot;🌐 프론트엔드 (읽기 전용)&quot;]
+        Home[&quot;홈 /&quot;]
+        Shop[&quot;쇼핑 /shop&quot;]
+        Detail[&quot;/shop/[id]&quot;]
+        About[&quot;/about&quot;]
+        Blog[&quot;/blog&quot;]
+        Reviews[&quot;/reviews&quot;]
+        Notice[&quot;/notice&quot;]
+        Popup[&quot;NoticePopup&quot;]
+        Tracker[&quot;VisitorTracker&quot;]
+    end
+
+    subgraph 관리자[&quot;⚙️ 관리자 /admin (읽기+쓰기)&quot;]
+        AdminCRUD[&quot;전체 CRUD&quot;]
+    end
+
+    subgraph DB[&quot;🗄️ Supabase Tables&quot;]
+        T_products[&quot;products&quot;]
+        T_categories[&quot;categories&quot;]
+        T_blog[&quot;blog_posts&quot;]
+        T_reviews[&quot;reviews&quot;]
+        T_notices[&quot;notices&quot;]
+        T_about[&quot;about&quot;]
+        T_visitors[&quot;visitor_stats&quot;]
+    end
+
+    Home --&gt;|SELECT| T_products
+    Home --&gt;|SELECT| T_categories
+    Shop --&gt;|SELECT| T_products
+    Shop --&gt;|SELECT| T_categories
+    Detail --&gt;|SELECT by id| T_products
+    About --&gt;|SELECT single| T_about
+    Blog --&gt;|SELECT| T_blog
+    Reviews --&gt;|SELECT| T_reviews
+    Notice --&gt;|SELECT| T_notices
+    Popup --&gt;|SELECT + filter| T_notices
+    Tracker --&gt;|UPSERT| T_visitors
+
+    AdminCRUD --&gt;|CRUD| T_products
+    AdminCRUD --&gt;|CRUD| T_categories
+    AdminCRUD --&gt;|CRUD| T_blog
+    AdminCRUD --&gt;|CRUD| T_reviews
+    AdminCRUD --&gt;|CRUD| T_notices
+    AdminCRUD --&gt;|UPDATE only| T_about
+    AdminCRUD --&gt;|SELECT| T_visitors
+
+    style DB fill:#1a472a,color:#fff
+    style 관리자 fill:#7c2d12,color:#fff
+</code></pre>
+<hr>
+<h2 id="-각-테이블-쿼리-패턴">📊 각 테이블 쿼리 패턴</h2>
+<table>
+<thead>
+<tr>
+<th>테이블</th>
+<th>정렬 기준</th>
+<th>쿼리 패턴</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>products</code></td>
+<td><code>created_at DESC</code></td>
+<td>전체 조회 / ID 단건 조회</td>
+</tr>
+<tr>
+<td><code>categories</code></td>
+<td><code>sort_order ASC</code></td>
+<td>전체 조회 → 프론트에서 parent/child 트리 구성</td>
+</tr>
+<tr>
+<td><code>blog_posts</code></td>
+<td><code>created_at DESC</code></td>
+<td>전체 조회</td>
+</tr>
+<tr>
+<td><code>reviews</code></td>
+<td><code>created_at DESC</code></td>
+<td>전체 조회</td>
+</tr>
+<tr>
+<td><code>notices</code></td>
+<td><code>created_at DESC</code></td>
+<td>전체 조회 → 프론트에서 is_popup + 날짜 필터</td>
+</tr>
+<tr>
+<td><code>about</code></td>
+<td>없음 (단일)</td>
+<td><code>.single()</code> 조회</td>
+</tr>
+<tr>
+<td><code>visitor_stats</code></td>
+<td>없음</td>
+<td>오늘 날짜로 조회 / 전체 합산</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="-supabase-auth">🔐 Supabase Auth</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>인증 방식</strong></td>
+<td>이메일 + 비밀번호 (<code>signInWithPassword</code>)</td>
+</tr>
+<tr>
+<td><strong>사용 범위</strong></td>
+<td><code>/admin</code> 경로에서만 사용</td>
+</tr>
+<tr>
+<td><strong>세션 관리</strong></td>
+<td><code>supabase.auth.getSession()</code> + <code>onAuthStateChange</code></td>
+</tr>
+<tr>
+<td><strong>보호 대상</strong></td>
+<td>Admin 대시보드 전체 (레이아웃 수준 보호)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="️-주의할-점">⚠️ 주의할 점</h2>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p><code>products.category</code>는 <code>categories.name</code>을 텍스트로 저장합니다.<br>
+외래키(FK)가 아닌 <strong>문자열 매칭</strong>이므로 카테고리 이름 변경 시 기존 상품의 category 값도 수동 업데이트가 필요합니다.</p>
+</div>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p><code>notices.start_date</code>, <code>notices.end_date</code>는 <code>text</code> 타입 (<code>&quot;YYYY-MM-DD&quot;</code> 형식)입니다.<br>
+문자열 비교(<code>&lt;=</code>, <code>&gt;=</code>)로 날짜 범위 필터링을 수행합니다.</p>
+</div>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p><code>about</code> 테이블은 항상 <strong>id = 1</strong> 인 단일 레코드만 존재합니다.<br>
+INSERT는 사용되지 않고 UPDATE만 수행됩니다.</p>
+</div>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p><code>visitor_stats</code>에는 RLS(Row Level Security) 정책이 필요할 수 있습니다.<br>
+현재 클라이언트에서 직접 INSERT/UPDATE하므로 적절한 정책 설정이 필요합니다.</p>
+</div>
+<hr>
+<blockquote>
+<p>📅 마지막 업데이트: 2026-02-21</p>
+</blockquote>
+
+            
+            
+        </body>
+        </html>

@@ -42,7 +42,8 @@ export default function AdminPage() {
   const [productImages, setProductImages] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [blogForm, setBlogForm] = useState({ title: "", excerpt: "", date: new Date().toLocaleDateString("ko-KR") })
-  const [noticeForm, setNoticeForm] = useState({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
+  const [noticeForm, setNoticeForm] = useState({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "", image_url: "" })
+  const [noticeImage, setNoticeImage] = useState<File | null>(null)
   const [reviewForm, setReviewForm] = useState({ author: "", rating: "5", product: "", content: "", date: new Date().toLocaleDateString("ko-KR"), image_url: "" })
   const [reviewImage, setReviewImage] = useState<File | null>(null)
   const [aboutForm, setAboutForm] = useState({ description: "", mission_title: "", mission_content: "", contact_title: "", contact_content: "" })
@@ -197,28 +198,45 @@ export default function AdminPage() {
   async function handleNoticeSubmit(e: React.FormEvent) {
     e.preventDefault()
     const isEditing = editingId.notices !== null;
-    const payload: any = {
-      title: noticeForm.title,
-      content: noticeForm.content,
-      date: noticeForm.date,
-      is_popup: true,
-    }
-    if (noticeForm.start_date) payload.start_date = noticeForm.start_date
-    if (noticeForm.end_date) payload.end_date = noticeForm.end_date
-    let error;
-    if (isEditing) {
-      const { error: err } = await supabase.from("notices").update(payload).eq("id", editingId.notices)
-      error = err;
-    } else {
-      const { error: err } = await supabase.from("notices").insert([payload])
-      error = err;
-    }
 
-    if (error) return toast.error("오류 발생")
-    toast.success(isEditing ? "수정 완료" : "등록 완료")
-    setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
-    setEditingId(prev => ({ ...prev, notices: null }))
-    fetchAll()
+    setIsUploading(true)
+    try {
+      let finalImageUrl = noticeForm.image_url;
+      if (noticeImage) {
+        finalImageUrl = await uploadImage(noticeImage)
+      }
+
+      const payload: any = {
+        title: noticeForm.title,
+        content: noticeForm.content,
+        date: noticeForm.date,
+        is_popup: true,
+        image_url: finalImageUrl,
+      }
+      if (noticeForm.start_date) payload.start_date = noticeForm.start_date
+      if (noticeForm.end_date) payload.end_date = noticeForm.end_date
+
+      let error;
+      if (isEditing) {
+        const { error: err } = await supabase.from("notices").update(payload).eq("id", editingId.notices)
+        error = err;
+      } else {
+        const { error: err } = await supabase.from("notices").insert([payload])
+        error = err;
+      }
+
+      if (error) throw error
+      toast.success(isEditing ? "수정 완료" : "등록 완료")
+      setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "", image_url: "" })
+      setNoticeImage(null)
+      setEditingId(prev => ({ ...prev, notices: null }))
+      fetchAll()
+    } catch (err: any) {
+      console.error(err)
+      toast.error(`오류 발생: ${err.message}`)
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   async function handleReviewSubmit(e: React.FormEvent) {
@@ -287,7 +305,8 @@ export default function AdminPage() {
   }
 
   function startEditNotice(n: any) {
-    setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: true, start_date: n.start_date || "", end_date: n.end_date || "" })
+    setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: true, start_date: n.start_date || "", end_date: n.end_date || "", image_url: n.image_url || "" })
+    setNoticeImage(null)
     setEditingId(prev => ({ ...prev, notices: n.id }))
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -309,7 +328,10 @@ export default function AdminPage() {
     setEditingId(prev => ({ ...prev, [tab]: null }))
     if (tab === "products") setProductForm({ name: "", brand: "", price: "", category: "", description: "", shipping_info: "모든 상품은 주문 확인 후 2-5 영업일 내에 발송됩니다. 배송비는 50,000원 이상 구매 시 무료이며, 그 이하의 경우 3,000원이 부과됩니다. 상품 수령 후 7일 이내에 미착용 상태로 반품 신청이 가능합니다. 반품 시 배송비는 고객 부담입니다.", product_details: "모든 상품은 정품 인증서와 함께 배송됩니다. 자세한 사이즈 및 소재 정보는 카카오톡 문의를 통해 확인해 주세요." })
     if (tab === "blog_posts") setBlogForm({ title: "", excerpt: "", date: new Date().toLocaleDateString("ko-KR") })
-    if (tab === "notices") setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "" })
+    if (tab === "notices") {
+      setNoticeForm({ title: "", content: "", date: new Date().toLocaleDateString("ko-KR"), is_popup: true, start_date: "", end_date: "", image_url: "" })
+      setNoticeImage(null)
+    }
     if (tab === "reviews") {
       setReviewForm({ author: "", rating: "5", product: "", content: "", date: new Date().toLocaleDateString("ko-KR"), image_url: "" })
       setReviewImage(null)
@@ -577,7 +599,32 @@ export default function AdminPage() {
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground">* 날짜를 비워두면 무기한 노출됩니다.</p>
-              <button type="submit" className="bg-foreground py-3 text-xs font-bold text-background">{editingId.notices ? "수정 완료" : "팝업 등록"}</button>
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs font-medium">팝업 이미지 (선택)</Label>
+                <div className="flex flex-col gap-1.5">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setNoticeImage(e.target.files?.[0] || null)}
+                    className="text-xs file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-semibold file:bg-foreground file:text-background hover:file:opacity-90 cursor-pointer"
+                  />
+                  {noticeForm.image_url && !noticeImage && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <img src={noticeForm.image_url} className="size-10 object-cover border border-foreground/10" alt="" />
+                      <span className="text-[10px] text-muted-foreground">기존 이미지 유지됨</span>
+                    </div>
+                  )}
+                  {noticeImage && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <img src={URL.createObjectURL(noticeImage)} className="size-10 object-cover border border-foreground/10" alt="" />
+                      <span className="text-[10px] text-green-600 font-medium">새 이미지 선택됨</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button type="submit" disabled={isUploading} className="bg-foreground py-3 text-xs font-bold text-background disabled:opacity-50">
+                {isUploading ? "처리 중..." : (editingId.notices ? "수정 완료" : "팝업 등록")}
+              </button>
             </form>
             <div className="mt-8 space-y-4">
               {notices.filter((n: any) => n.is_popup).map((n: any) => {
@@ -600,10 +647,7 @@ export default function AdminPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => {
-                        setNoticeForm({ title: n.title, content: n.content, date: n.date, is_popup: true, start_date: n.start_date || "", end_date: n.end_date || "" })
-                        setEditingId(prev => ({ ...prev, notices: n.id }))
-                      }} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
+                      <button onClick={() => startEditNotice(n)} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
                       <button onClick={() => handleDelete("notices", n.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
                     </div>
                   </div>
