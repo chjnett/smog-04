@@ -354,6 +354,23 @@ export default function AdminPage() {
 
     let error
     if (isEditing) {
+      // Cascade Update: If name changes, update all products
+      const oldCategory = categories.find(c => c.id === editingId.categories)
+      if (oldCategory && oldCategory.name !== payload.name) {
+        toast.loading("관련 상품들의 카테고리 정보를 업데이트 중입니다...")
+        const { error: cascadeError } = await supabase
+          .from("products")
+          .update({ category: payload.name })
+          .eq("category", oldCategory.name)
+
+        if (cascadeError) {
+          console.error("Cascade update failed:", cascadeError)
+          toast.error("일부 상품의 카테고리 정보 업데이트에 실패했습니다.")
+        } else {
+          toast.dismiss()
+        }
+      }
+
       const { error: err } = await supabase.from("categories").update(payload).eq("id", editingId.categories)
       error = err
     } else {
@@ -401,6 +418,22 @@ export default function AdminPage() {
   // Delete Handlers
   async function handleDelete(table: string, id: string) {
     if (table === "categories") {
+      // Deletion Protection: Check if any product uses this category
+      const categoryToDelete = categories.find(c => c.id === id)
+      if (categoryToDelete) {
+        const { data: linkedProducts, error: checkError } = await supabase
+          .from("products")
+          .select("id")
+          .eq("category", categoryToDelete.name)
+          .limit(1)
+
+        if (checkError) {
+          console.error("Deletion check failed:", checkError)
+        } else if (linkedProducts && linkedProducts.length > 0) {
+          return toast.error("이 카테고리를 사용 중인 상품이 있습니다. 상품들의 카테고리를 먼저 변경하거나 삭제해주세요.")
+        }
+      }
+
       const children = categories.filter(c => c.parent_id === id)
       if (children.length > 0) {
         if (!confirm(`이 카테고리에 ${children.length}개의 하위 카테고리가 있습니다. 모두 삭제됩니다. 계속하시겠습니까?`)) return
@@ -432,9 +465,10 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-secondary overflow-x-auto h-auto">
+        <TabsList className="grid w-full grid-cols-4 bg-secondary overflow-x-auto h-auto">
           <TabsTrigger value="products" className="text-[10px] uppercase font-bold tracking-tight py-3">상품</TabsTrigger>
           <TabsTrigger value="categories" className="text-[10px] uppercase font-bold tracking-tight py-3">카테고리</TabsTrigger>
+          <TabsTrigger value="reviews" className="text-[10px] uppercase font-bold tracking-tight py-3">리뷰</TabsTrigger>
           <TabsTrigger value="notice" className="text-[10px] uppercase font-bold tracking-tight py-3">공지</TabsTrigger>
         </TabsList>
 
@@ -573,6 +607,78 @@ export default function AdminPage() {
               {categories.length === 0 && (
                 <p className="text-xs text-muted-foreground py-8 text-center">등록된 카테고리가 없습니다.</p>
               )}
+            </div>
+          </div>
+        </TabsContent>
+        {/* Reviews Tab */}
+        <TabsContent value="reviews">
+          <div className="mt-8">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">리뷰 관리</h2>
+            <form onSubmit={handleReviewSubmit} className="mt-6 flex flex-col gap-4 border border-foreground/10 p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">{editingId.reviews ? "리뷰 수정 중" : "새 리뷰 등록"}</span>
+                {editingId.reviews && <button type="button" onClick={() => cancelEdit("reviews")} className="text-[10px] underline">취소</button>}
+              </div>
+              <Input placeholder="작성자" value={reviewForm.author} onChange={e => setReviewForm({ ...reviewForm, author: e.target.value })} required />
+              <Input placeholder="상품명" value={reviewForm.product} onChange={e => setReviewForm({ ...reviewForm, product: e.target.value })} required />
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">별점 (1-5)</Label>
+                <Select value={reviewForm.rating} onValueChange={val => setReviewForm({ ...reviewForm, rating: val })}>
+                  <SelectTrigger><SelectValue placeholder="별점 선택" /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={n.toString()}>{n}점</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <textarea placeholder="리뷰 내용" className="w-full min-h-32 border border-foreground/20 p-3 text-sm focus:outline-none text-foreground bg-secondary/20" value={reviewForm.content} onChange={e => setReviewForm({ ...reviewForm, content: e.target.value })} required />
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs font-medium">리뷰 이미지 (선택)</Label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setReviewImage(e.target.files?.[0] || null)}
+                  className="text-xs file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-semibold file:bg-foreground file:text-background hover:file:opacity-90 cursor-pointer"
+                />
+                {reviewForm.image_url && !reviewImage && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <img src={reviewForm.image_url} className="size-10 object-cover border border-foreground/10" alt="" />
+                    <span className="text-[10px] text-muted-foreground">기존 이미지 유지됨</span>
+                  </div>
+                )}
+                {reviewImage && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <img src={URL.createObjectURL(reviewImage)} className="size-10 object-cover border border-foreground/10" alt="" />
+                    <span className="text-[10px] text-green-600 font-medium">새 이미지 선택됨</span>
+                  </div>
+                )}
+              </div>
+              <button type="submit" disabled={isUploading} className="bg-foreground py-3 text-xs font-bold text-background disabled:opacity-50">
+                {isUploading ? "처리 중..." : (editingId.reviews ? "수정 완료" : "리뷰 등록")}
+              </button>
+            </form>
+            <div className="mt-8 space-y-4">
+              {reviews.map(r => (
+                <div key={r.id} className="flex items-center justify-between border-b border-foreground/5 py-4">
+                  <div className="flex items-center gap-3">
+                    {r.image_url && <img src={r.image_url} className="size-10 object-cover border border-foreground/5 bg-secondary" alt="" />}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] font-bold text-muted-foreground">{r.author}</p>
+                        <div className="flex text-[8px]">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} className={i < r.rating ? "text-foreground" : "text-foreground/20"}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{r.product}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => startEditReview(r)} className="text-[10px] font-bold text-muted-foreground hover:text-foreground">수정</button>
+                    <button onClick={() => handleDelete("reviews", r.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="size-4" /></button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </TabsContent>

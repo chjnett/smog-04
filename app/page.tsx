@@ -41,11 +41,11 @@ export default function HomePage() {
   }, [])
 
   const filteredProducts = products.filter((p) => {
-    const matchesCategory = activeCategory === "전체" || p.category === activeCategory
+    const matchesCategory = activeCategory === "전체" || p.category === activeCategory || p.brand === activeCategory
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.brand.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesSearch
-  }).slice(0, activeCategory === "전체" && !searchQuery ? 8 : undefined)
+  }).slice(0, (activeCategory === "전체" && !searchQuery) ? 8 : undefined)
 
   return (
     <div className="pb-16">

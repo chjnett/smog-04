@@ -46,7 +46,12 @@ function ShopContent() {
   const filteredProducts =
     activeCategory === "전체"
       ? products
-      : products.filter((p) => p.category === activeCategory)
+      : products.filter((p) => {
+        const productCategory = p.category?.trim()
+        const productBrand = p.brand?.trim()
+        const target = activeCategory.trim()
+        return productCategory === target || productBrand === target
+      })
 
   return (
     <div className="pb-16">
