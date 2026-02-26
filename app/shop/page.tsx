@@ -6,6 +6,7 @@ import { PRODUCTS, CATEGORIES, type Category, type Product, type CategoryItem } 
 import { ProductCard } from "@/components/product-card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { supabase } from "@/lib/supabase"
+import { normalizeText, isMatch } from "@/lib/utils"
 
 function ShopContent() {
   const searchParams = useSearchParams()
@@ -37,21 +38,29 @@ function ShopContent() {
 
   useEffect(() => {
     const categoryQuery = searchParams.get("category")
-    const availableCategories = dbCategories.length > 0 ? dbCategories : CATEGORIES
-    if (categoryQuery && availableCategories.includes(categoryQuery)) {
-      setActiveCategory(categoryQuery)
+    if (categoryQuery) {
+      const availableCategories = dbCategories.length > 0 ? dbCategories : CATEGORIES
+      // 정규화된 이름으로 찾기
+      const matchedCategory = availableCategories.find(c =>
+        normalizeText(c) === normalizeText(categoryQuery) ||
+        normalizeText(c).includes(normalizeText(categoryQuery))
+      )
+
+      if (matchedCategory) {
+        setActiveCategory(matchedCategory)
+      } else {
+        // 매칭되는 카테고리가 정확히 없더라도 쿼리가 있으면 해당 쿼리를 기준으로 필터링 시도
+        setActiveCategory(categoryQuery)
+      }
+    } else {
+      setActiveCategory("전체")
     }
   }, [searchParams, dbCategories])
 
   const filteredProducts =
     activeCategory === "전체"
       ? products
-      : products.filter((p) => {
-        const productCategory = p.category?.trim()
-        const productBrand = p.brand?.trim()
-        const target = activeCategory.trim()
-        return productCategory === target || productBrand === target
-      })
+      : products.filter((p) => isMatch(p.category, activeCategory) || isMatch(p.brand, activeCategory))
 
   return (
     <div className="pb-16">

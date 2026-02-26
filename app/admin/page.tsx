@@ -143,7 +143,12 @@ export default function AdminPage() {
       }
 
       const productPayload: any = {
-        ...productForm,
+        name: productForm.name.trim(),
+        brand: productForm.brand.trim(),
+        category: productForm.category.trim(),
+        description: productForm.description.trim(),
+        shipping_info: productForm.shipping_info.trim(),
+        product_details: productForm.product_details.trim(),
         price: parseInt(productForm.price)
       }
       if (publicUrls.length > 0) {

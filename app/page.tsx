@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product-card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { supabase } from "@/lib/supabase"
 import { useEffect } from "react"
+import { normalizeText } from "@/lib/utils"
 
 import { Search } from "lucide-react"
 
@@ -40,8 +41,15 @@ export default function HomePage() {
     fetchProducts()
   }, [])
 
+  const isMatch = (text: string, query: string) => {
+    if (query === "전체") return true
+    const normalizedText = normalizeText(text)
+    const normalizedQuery = normalizeText(query)
+    return normalizedText.includes(normalizedQuery) || normalizedQuery.includes(normalizedText)
+  }
+
   const filteredProducts = products.filter((p) => {
-    const matchesCategory = activeCategory === "전체" || p.category === activeCategory || p.brand === activeCategory
+    const matchesCategory = isMatch(p.category, activeCategory) || isMatch(p.brand, activeCategory)
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.brand.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesSearch
