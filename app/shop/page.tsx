@@ -13,7 +13,8 @@ function ShopContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string>("전체")
-  const [dbCategories, setDbCategories] = useState<string[]>([])
+  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null)
+  const [dbCategories, setDbCategories] = useState<CategoryItem[]>([])
 
   useEffect(() => {
     async function fetchProducts() {
@@ -26,8 +27,8 @@ function ShopContent() {
         if (productsRes.data && !productsRes.error) {
           setProducts(productsRes.data as Product[])
         }
-        if (categoriesRes.data && !categoriesRes.error && categoriesRes.data.length > 0) {
-          setDbCategories(["전체", ...categoriesRes.data.map((c: CategoryItem) => c.name)])
+        if (categoriesRes.data && !categoriesRes.error) {
+          setDbCategories(categoriesRes.data as CategoryItem[])
         }
       } finally {
         setIsLoading(false)
@@ -38,29 +39,65 @@ function ShopContent() {
 
   useEffect(() => {
     const categoryQuery = searchParams.get("category")
+    const subQuery = searchParams.get("sub")
+
     if (categoryQuery) {
-      const availableCategories = dbCategories.length > 0 ? dbCategories : CATEGORIES
-      // 정규화된 이름으로 찾기
-      const matchedCategory = availableCategories.find(c =>
-        normalizeText(c) === normalizeText(categoryQuery) ||
-        normalizeText(c).includes(normalizeText(categoryQuery))
+      const matchedCategory = dbCategories.find(c =>
+        !c.parent_id && (
+          normalizeText(c.name) === normalizeText(categoryQuery) ||
+          normalizeText(c.name).includes(normalizeText(categoryQuery))
+        )
       )
 
       if (matchedCategory) {
-        setActiveCategory(matchedCategory)
+        setActiveCategory(matchedCategory.name)
       } else {
-        // 매칭되는 카테고리가 정확히 없더라도 쿼리가 있으면 해당 쿼리를 기준으로 필터링 시도
         setActiveCategory(categoryQuery)
       }
     } else {
       setActiveCategory("전체")
     }
+
+    if (subQuery) {
+      setActiveSubCategory(subQuery)
+    } else {
+      setActiveSubCategory(null)
+    }
   }, [searchParams, dbCategories])
 
-  const filteredProducts =
-    activeCategory === "전체"
-      ? products
-      : products.filter((p) => isMatch(p.category, activeCategory) || isMatch(p.brand, activeCategory))
+  const filteredProducts = products.filter((p) => {
+    if (activeCategory === "전체") return true
+
+    const normCategory = normalizeText(activeCategory)
+    const normSub = activeSubCategory ? normalizeText(activeSubCategory) : null
+
+    // Find the current category item if it exists
+    const categoryItem = dbCategories.find(c => !c.parent_id && normalizeText(c.name) === normCategory)
+
+    if (normSub) {
+      // If we have a sub-category/brand filter
+      // 1. Matches as a sub-category directly
+      const isSubCategoryMatch = normalizeText(p.category) === normSub
+      // 2. Matches as a brand filter within the parent category
+      const isBrandMatch = normalizeText(p.brand).includes(normSub)
+
+      // Ensure it belongs to the parent category
+      const belongsToParent = normalizeText(p.category) === normCategory ||
+        dbCategories.some(c => normalizeText(c.name) === normalizeText(p.category) && c.parent_id === categoryItem?.id)
+
+      return belongsToParent && (isSubCategoryMatch || isBrandMatch)
+    } else {
+      // If we only have a parent category filter
+      // 1. Matches the parent category itself
+      const isParentMatch = normalizeText(p.category) === normCategory
+      // 2. Matches any child category of this parent
+      const isChildMatch = dbCategories.some(c =>
+        c.parent_id === categoryItem?.id && normalizeText(c.name) === normalizeText(p.category)
+      )
+
+      return isParentMatch || isChildMatch
+    }
+  })
 
   return (
     <div className="pb-16">

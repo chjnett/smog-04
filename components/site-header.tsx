@@ -105,7 +105,7 @@ export function SiteHeader() {
                             {children.map((child) => (
                               <Link
                                 key={child.id}
-                                href={`/shop?category=${encodeURIComponent(child.name)}`}
+                                href={`/shop?category=${encodeURIComponent(parent.name)}&sub=${encodeURIComponent(child.name)}`}
                                 onClick={() => setOpen(false)}
                                 className="flex items-center gap-2 py-2.5 pl-4 text-xs text-muted-foreground transition-colors hover:text-foreground"
                               >
