@@ -1,29 +1,12 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
-export default function NoticePage() {
-  const [notices, setNotices] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+async function getNotices() {
+  const { data, error } = await supabase.from("notices").select("*").order("created_at", { ascending: false })
+  return data || []
+}
 
-  useEffect(() => {
-    async function fetchNotices() {
-      try {
-        const { data, error } = await supabase.from("notices").select("*").order("created_at", { ascending: false })
-        if (data && !error) {
-          setNotices(data)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchNotices()
-  }, [])
-
-  if (isLoading) {
-    return <div className="flex h-[50vh] items-center justify-center text-xs italic text-muted-foreground">불러오는 중...</div>
-  }
+export default async function NoticePage() {
+  const notices = await getNotices()
 
   return (
     <div className="px-4 py-12">

@@ -1,29 +1,12 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
-export default function BlogPage() {
-  const [posts, setPosts] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+async function getBlogPosts() {
+  const { data, error } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false })
+  return data || []
+}
 
-  useEffect(() => {
-    async function fetchBlogs() {
-      try {
-        const { data, error } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false })
-        if (data && !error) {
-          setPosts(data)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchBlogs()
-  }, [])
-
-  if (isLoading) {
-    return <div className="flex h-[50vh] items-center justify-center text-xs italic text-muted-foreground">불러오는 중...</div>
-  }
+export default async function BlogPage() {
+  const posts = await getBlogPosts()
 
   return (
     <div className="px-4 py-12">
