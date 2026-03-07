@@ -2,6 +2,8 @@ import { type Product, type CategoryItem } from "@/lib/constants"
 import { supabase } from "@/lib/supabase"
 import { HomeContent } from "@/components/home-content"
 
+export const dynamic = 'force-dynamic'
+
 async function getInitialData() {
   const [productsRes, categoriesRes] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: false }),
