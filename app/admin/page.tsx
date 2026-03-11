@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [blogs, setBlogs] = useState<any[]>([])
   const [notices, setNotices] = useState<any[]>([])
   const [reviews, setReviews] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
   const [about, setAbout] = useState<any>(null)
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [todayVisitors, setTodayVisitors] = useState(0)
@@ -65,13 +66,14 @@ export default function AdminPage() {
   async function fetchAll() {
     setIsLoading(true)
     try {
-      const [resProducts, resBlogs, resNotices, resReviews, resAbout, resCategories] = await Promise.all([
+      const [resProducts, resBlogs, resNotices, resReviews, resAbout, resCategories, resOrders] = await Promise.all([
         supabase.from("products").select("*").order("created_at", { ascending: false }),
         supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
         supabase.from("notices").select("*").order("created_at", { ascending: false }),
         supabase.from("reviews").select("*").order("created_at", { ascending: false }),
         supabase.from("about").select("*").single(),
-        supabase.from("categories").select("*").order("sort_order", { ascending: true })
+        supabase.from("categories").select("*").order("sort_order", { ascending: true }),
+        supabase.from("orders").select("*").order("created_at", { ascending: false })
       ])
 
       if (resProducts.data) setProducts(resProducts.data)
@@ -83,6 +85,7 @@ export default function AdminPage() {
         setAboutForm(resAbout.data)
       }
       if (resCategories.data) setCategories(resCategories.data)
+      if (resOrders.data) setOrders(resOrders.data)
 
       // Visitor Stats
       const today = new Date().toISOString().split("T")[0]
@@ -470,9 +473,10 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-secondary overflow-x-auto h-auto">
+        <TabsList className="grid w-full grid-cols-5 bg-secondary overflow-x-auto h-auto">
           <TabsTrigger value="products" className="text-[10px] uppercase font-bold tracking-tight py-3">상품</TabsTrigger>
           <TabsTrigger value="categories" className="text-[10px] uppercase font-bold tracking-tight py-3">카테고리</TabsTrigger>
+          <TabsTrigger value="orders" className="text-[10px] uppercase font-bold tracking-tight py-3">주문현황</TabsTrigger>
           <TabsTrigger value="reviews" className="text-[10px] uppercase font-bold tracking-tight py-3">리뷰</TabsTrigger>
           <TabsTrigger value="notice" className="text-[10px] uppercase font-bold tracking-tight py-3">공지</TabsTrigger>
         </TabsList>
@@ -611,6 +615,70 @@ export default function AdminPage() {
               ))}
               {categories.length === 0 && (
                 <p className="text-xs text-muted-foreground py-8 text-center">등록된 카테고리가 없습니다.</p>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Orders Tab */}
+        <TabsContent value="orders">
+          <div className="mt-8">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">주문 내역</h2>
+            <div className="mt-6 space-y-4">
+              {orders.length > 0 ? (
+                orders.map((order) => (
+                  <div key={order.id} className="border border-foreground/10 p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground">{new Date(order.created_at).toLocaleString('ko-KR')}</p>
+                        <p className="text-sm font-bold mt-1">{order.product_name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                          {order.status}
+                        </span>
+                        <button onClick={() => handleDelete("orders", order.id)} className="text-muted-foreground hover:text-red-500">
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">성함</p>
+                        <p className="font-medium">{order.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">연락처</p>
+                        <p className="font-medium">{order.contact}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground">주소</p>
+                        <p className="font-medium">{order.address}</p>
+                      </div>
+                      {order.customs_id && (
+                        <div className="col-span-2">
+                          <p className="text-muted-foreground">개인통관번호</p>
+                          <p className="font-medium">{order.customs_id}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="pt-2 flex justify-end">
+                      <a
+                        href={`https://wa.me/${order.contact.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold underline text-muted-foreground hover:text-foreground"
+                      >
+                        연락하기 (WA)
+                      </a>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12 border border-dashed border-foreground/10">
+                  <p className="text-xs text-muted-foreground">접수된 주문이 없습니다.</p>
+                </div>
               )}
             </div>
           </div>

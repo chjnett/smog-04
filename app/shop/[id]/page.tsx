@@ -18,6 +18,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { OrderForm } from "@/components/order-form"
+import { Button } from "@/components/ui/button"
 
 export default function ProductDetailPage({
   params,
@@ -29,6 +31,7 @@ export default function ProductDetailPage({
   const [isLoading, setIsLoading] = useState(true)
   const [api, setApi] = useState<CarouselApi>()
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false)
 
   useEffect(() => {
     async function fetchProduct() {
@@ -157,9 +160,9 @@ export default function ProductDetailPage({
               <p className="font-semibold text-foreground mb-1">구매방법</p>
               <p className="text-xs text-muted-foreground/80 mb-4">(구매 관련 궁금하신 사항이 있으시면 언제든 카카오톡 고객센터로 연락주세요 😀)</p>
               <ol className="space-y-2 text-xs list-decimal list-inside mb-6">
-                <li>구매 원하시는 제품들을 캡쳐하신후 카카오 문의하기 눌러주세요</li>
-                <li>제품사진, 성함, 번호, 주소, 개인통관고유부호를 카톡상담사에게 전달해주세요<br /><span className="text-muted-foreground/70 ml-4">*주소 꼭 올바르게 동호수까지 작성 부탁드려요!</span></li>
-                <li>저희 상담 직원이 계좌안내 드릴거에요. 😊 결제 해주시면 됩니다.</li>
+                <li>원하시는 제품 상세 페이지에서 하단 [주문하기]를 눌러주세요</li>
+                <li>성함, 연락처, 주소, 개인통관고유부호를 입력 후 주문을 완료해 주세요</li>
+                <li>주문 접수 후 상담 직원이 카카오톡으로 계좌 및 결제 안내를 드릴 거예요. 😊</li>
               </ol>
 
               <p className="font-semibold text-foreground mb-2">배송소요시간</p>
@@ -183,15 +186,27 @@ export default function ProductDetailPage({
 
       {/* Fixed Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex gap-0 border-t border-foreground/10 bg-background">
+        <button
+          onClick={() => setIsOrderFormOpen(true)}
+          className="flex flex-1 items-center justify-center bg-foreground py-4 text-sm font-bold tracking-wide text-background transition-opacity hover:opacity-90"
+        >
+          주문하기
+        </button>
         <a
           href="https://open.kakao.com/o/seH2Jkhi"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-1 items-center justify-center bg-foreground py-4 text-sm font-bold tracking-wide text-background transition-opacity hover:opacity-90"
+          className="flex flex-1 items-center justify-center bg-[#FEE500] py-4 text-sm font-bold tracking-wide text-[#3C1E1E] transition-opacity hover:opacity-90"
         >
-          카카오톡 문의하기
+          카카오톡 문의
         </a>
       </div>
+
+      <OrderForm
+        product={product}
+        isOpen={isOrderFormOpen}
+        onClose={() => setIsOrderFormOpen(false)}
+      />
     </div>
   )
 }

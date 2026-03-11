@@ -12,6 +12,14 @@ async function inspectSchema() {
     console.log('\n--- INSPECTING ONE CATEGORY OBJECT ---');
     const { data: categories } = await supabase.from('categories').select('*').limit(1);
     console.log(JSON.stringify(categories[0], null, 2));
+
+    console.log('\n--- INSPECTING ORDERS TABLE ---');
+    const { data: o, error: e } = await supabase.from('orders').select('*').limit(1);
+    if (e) {
+        console.error('Error fetching orders:', e);
+    } else {
+        console.log('Orders found:', o.length);
+    }
 }
 
 inspectSchema();
